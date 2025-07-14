@@ -9,10 +9,28 @@ output:
 
 This notebook looks for common sources of error and flags those records manual revision by the assessors who capture data from each country.
 
-The output is a file showing the records that need manual review or corrections, if any
+The output are:
+* a report of the quality check
+* A .csv file (called ´kobo_output_tocheck.csv´) showing **the records that need manual review or corrections**, if any.
+* A .csv file (called ´kobo_output_clean.csv´) with the data after processing (**records flagged in the previous file may or may not be included according to user choice**).
+
+## Variables that need to be set by the user
+
+Output from KoboToolbox in .csv format as downloaded using [these instructions](https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/5_Data_collection/Kobo_toolbox_help.html). 
+
+```{r}
+kobo_file="International_Genetic_Indicator_testing_V_4.0_-_latest_version_-_False_-_2023-11-02-08-23-26.csv"
+```
+
+Should records that need manual review and potentially correction be removed or kept in the exported "clean" data?. True to keep, false to filter them. Defaults to FALSE
 
 
-## Libraries and funtions
+```{r}
+keep_to_check=FALSE #true to keep, false to filter them. Defaults to FALSE
+```
+
+
+## Libraries and functions
 
 Load required libraries:
 
@@ -35,7 +53,8 @@ Useful custom functions
 
 Get Kobo raw output data:
 ```{r}
-kobo_output<-read.csv(file="International_Genetic_Indicator_testing_V_4.0_-_latest_version_-_False_-_2023-11-02-08-23-26.csv", sep=";", header=TRUE) %>%
+#kobo_file variable is defined at the start of this script, it should be csv file
+kobo_output<-read.csv(file=kobo_file, sep=";", header=TRUE) %>%
 
 ## add  taxon column
 mutate(taxon=(utile.tools::paste(genus, species, subspecies_variety, na.rm=TRUE))) %>%
@@ -246,7 +265,7 @@ Asks the user if she/he wants to keep the taxa flagged in the previous step, or 
 
 
 ```{r}
-keep_to_check=FALSE #true to keep, false to filter them. Defaults to FALSE
+# keep_to_check variable is defined at the start of the script. It should be TRUE/FALSE
 
 if(keep_to_check==FALSE){
 # Remove from the clean version any remaining taxa with issues
