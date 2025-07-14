@@ -1,0 +1,241 @@
+---
+title: "Data exploration and cleaning"
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
+---
+
+This notebook looks for common sources of error and flags those records manual revision by the assessors who capture data from each country.
+
+The output is a file showing the records that need manual review or corrections, if any
+
+
+## Get data
+
+Load required libraries:
+
+```{r, warning=FALSE, message=FALSE}
+library(tidyr)
+library(dplyr)
+library(utile.tools)
+library(stringr)
+library(ggplot2)
+```
+
+Get Kobo raw output data:
+```{r}
+kobo_output<-read.csv(file="International_Genetic_Indicator_testing_V_4.0_-_latest_version_-_False_-_2023-11-02-08-23-26.csv", sep=";", header=TRUE) %>%
+
+## add  taxon column
+mutate(taxon=(utile.tools::paste(genus, species, subspecies_variety, na.rm=TRUE))) %>%
+    # remove white space at the end of the name
+    mutate(taxon=str_trim(taxon, "right"))
+
+```
+
+Filter out records which were marked as "not_approved" in the manual Kobo validation interface (this means country assessors determined the is something wrong with that particular record).
+
+```{r}
+# check if any species is flagged as "validation_status_not_approved"
+kobo_output %>%
+      filter(X_validation_status=="validation_status_not_approved")  %>%
+            select(country_assessment, name_assessor, taxon)
+
+# omit those records from data:
+kobo_output<- kobo_output %>%
+            filter(X_validation_status!="validation_status_not_approved")
+
+```
+
+### Filter out any sort of tests
+
+```{r}
+# select likely columns to say "test"
+cols= c("name_assessor", "email_assessor", "genus", "species", "subspecies_variety",
+         "scientific_authority", "common_name", "GBIF_taxonID", "NCBI_taxonID", "time_populations")
+
+# check for "test" or "template" on any of them
+kobo_output %>% 
+  filter(if_any(all_of(cols), ~ grepl("test", .)) |
+         if_any(all_of(cols), ~ grepl("Template", .)))  %>% 
+  select(country_assessment, name_assessor, genus, species)
+
+# filter them out of dataset
+kobo_output<- kobo_output %>% 
+              filter(if_any(all_of(cols), ~ !grepl("test", .))) %>% 
+              filter(genus!="Template")
+
+```
+
+
+## Check for common data capture errors
+
+### Number of populations
+
+In the form, -999 was used to mark taxa with unknown number of extant populations. This was used because answering the question was mandatory, so leaving it blank wasn't possible. We have to change -999 to NA.
+
+```{r}
+kobo_output<-kobo_output %>%
+             mutate(n_extant_populations= na_if(n_extant_populations, -999))
+```
+
+We can now explore how many populations per species are still extant (still existing! NOT extinct!)?
+
+```{r}
+summary(kobo_output$n_extant_populations)
+table(kobo_output$n_extant_populations)
+```
+
+Plot histogram
+```{r}
+ggplot(kobo_output, aes(x=n_extant_populations))+
+      geom_histogram()
+```
+
+Zoom Plot histogram
+```{r}
+kobo_output %>%
+    filter(n_extant_populations>=0, n_extant_populations<25) %>%
+
+ggplot(., aes(x=n_extant_populations))+
+      geom_histogram()
+```
+
+Once -999 was replaced by NA there should be no negative number of populations (if they are, they are typos that need to be corrected).
+```{r}
+kobo_output %>%
+      filter(n_extant_populations<0) %>%
+      select(country_assessment, taxon, name_assessor, n_extant_populations, n_extint_populations)
+```
+
+Show which taxa (if any) have 0 (zero) extant populations. **Is this correct? needs to be manually checked**
+```{r}
+kobo_output %>%
+      filter(n_extant_populations==0) %>%
+      select(country_assessment, taxon, name_assessor, n_extant_populations, n_extint_populations)
+
+
+```
+
+Show which species (if any) have 999 extant populations. **Should this be -999? OR n_extinct pops??**
+```{r}
+kobo_output %>%
+      filter(n_extant_populations==999) %>%
+      select(country_assessment, taxon, name_assessor, n_extant_populations, n_extint_populations)
+
+
+```
+
+Show which species (if any) have 999 EXTINCT populations. **Should this be -999?**
+```{r}
+kobo_output %>%
+      filter(n_extint_populations==999) %>%
+      select(country_assessment, taxon, name_assessor, n_extant_populations, n_extint_populations)
+```
+Put all taxa with weird number of populations that need to be checked together:
+
+```{r}
+check_n_pops <- kobo_output %>% 
+      # variables of interest
+      select(country_assessment, name_assessor, taxon, n_extant_populations, n_extint_populations) %>%
+
+      # same filters that discussed above
+      filter(n_extant_populations<0 |
+            n_extant_populations==0 | 
+            n_extant_populations==999 | 
+            n_extint_populations==999) %>% 
+
+# add a column stating what needs to be checked:
+
+       mutate(need_to_check="check number of extant or extint populations. Are 0 correct? should 999 be -999? are extant/extint confused?")
+
+
+```
+
+
+### GBIF ID codes 
+
+Check GBIF 
+```{r}
+# check IDs
+head(kobo_output$GBIF_taxonID)
+```
+
+GBIF IDs tend to be 7 characters long. Some can be larger or shorter, but these seem to be exceptions. Therefore let's flag any records where the GBIF Id is =/= 7 to manually check if it is correct.
+
+```{r}
+kobo_output %>%
+            filter(nchar(GBIF_taxonID)>0, nchar(GBIF_taxonID)!=7) %>%
+  # show only relevant columns
+            select(country_assessment, name_assessor, taxon, GBIF_taxonID)
+```
+
+Put them in their own happy df with a column stating what is the likely problem:
+
+```{r}
+check_GBIF <- kobo_output %>%
+              filter(nchar(GBIF_taxonID)>0, nchar(GBIF_taxonID)!=7) %>%
+  # show only relevant columns
+            select(country_assessment, name_assessor, taxon, GBIF_taxonID) %>%
+# add a column stating what needs to be checked:
+
+       mutate(need_to_check="check the GBIF taxonID. Either it looks plain different, or has more or less than 7 digits (most ids are 7 digits long, and this isn't, it could be an exception, or a mistake).")
+```
+
+
+### Species names
+
+Genus, species and subspecies should be a single word, check if there are cases where it isn't. Only exception would be "var." or "subsp." in the subspecies_variety field: 
+
+```{r}
+kobo_output %>% 
+  filter(grepl(" ", genus) | 
+         grepl(" ", species) | 
+         grepl(" ", subspecies_variety)) %>%
+   filter(!grepl("var.", subspecies_variety)) %>%
+   filter(!grepl("subsp.", subspecies_variety)) %>%
+  # show only relevant columns
+  # show only relevant columns
+            select(country_assessment, name_assessor, taxon, genus, species, subspecies_variety)
+
+```
+
+Put them in their own happy df with a column stating what is the likely problem:
+
+```{r}
+check_taxon_names <- kobo_output %>% 
+  filter(grepl(" ", genus) | 
+         grepl(" ", species) | 
+         grepl(" ", subspecies_variety)) %>%
+   filter(!grepl("var.", subspecies_variety)) %>%
+   filter(!grepl("subsp.", subspecies_variety)) %>%
+  # show only relevant columns
+            select(country_assessment, name_assessor, taxon, genus, species, subspecies_variety) %>%
+       mutate(need_to_check="check genus, species or subspecies_variety, we are targeting to have single words in each field, except in the ifraspecific names, where 'var.' and 'subsp.' (only) would be accepted. Other details or taxonomic notes should be added in the comments.")
+```
+
+
+## Create a single file for assessors review:
+
+```{r}
+to_check<-full_join(check_n_pops, check_GBIF) %>% full_join(check_taxon_names) %>%
+  # show columns in desired order:
+select(country_assessment, name_assessor, taxon, need_to_check, n_extant_populations,
+         n_extint_populations, GBIF_taxonID, genus, species, subspecies_variety)
+
+# save file:
+
+write.csv(to_check, "kobo_output_tocheck.csv", row.names = FALSE, fileEncoding = "UTF-8")
+
+```
+
+
+Session Info for reproducibility purposes:
+
+```{r}
+sessionInfo()
+```
+
+
