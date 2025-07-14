@@ -12,7 +12,7 @@ This notebook looks for common sources of error and flags those records manual r
 The output is a file showing the records that need manual review or corrections, if any
 
 
-## Get data
+## Libraries and funtions
 
 Load required libraries:
 
@@ -23,6 +23,15 @@ library(utile.tools)
 library(stringr)
 library(ggplot2)
 ```
+
+Useful custom functions
+
+```{r}
+# not in
+"%!in%" <- function(x, y)!('%in%'(x,y))
+```
+
+## Get data
 
 Get Kobo raw output data:
 ```{r}
@@ -230,6 +239,31 @@ select(country_assessment, name_assessor, taxon, need_to_check, n_extant_populat
 write.csv(to_check, "kobo_output_tocheck.csv", row.names = FALSE, fileEncoding = "UTF-8")
 
 ```
+
+## Save the clean koboutput version, removing any taxa with issues:
+
+Asks the user if she/he wants to keep the taxa flagged in the previous step, or if they should be filtered out.
+
+
+```{r}
+keep_to_check=FALSE #true to keep, false to filter them. Defaults to FALSE
+
+if(keep_to_check==FALSE){
+# Remove from the clean version any remaining taxa with issues
+kobo_clean<-kobo_output %>%
+            filter(taxon %!in% to_check$taxon)
+print(paste("A total of", nrow(to_check), "records were excluded from the cleaned data"))
+}
+
+
+```
+
+Export clean version
+
+```{r}
+write.csv(kobo_clean, "kobo_output_clean.csv", row.names = FALSE, fileEncoding = "UTF-8")
+```
+
 
 
 Session Info for reproducibility purposes:
