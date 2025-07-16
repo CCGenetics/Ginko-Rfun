@@ -85,10 +85,15 @@ get_indicatorDNAbased_data<-function(kobo_output=kobo_output){
                   # multiassessment
                   multiassessment) %>%
   
-  # change all "" (empty) cells to NA
-  
-  mutate(across(everything(),~na_if(as.character(.),"")))
-
+    # change all "" (empty) cells to NA. Important: preserve original types (e.g. numeric stays numeric).
+    
+    mutate(across(everything(), ~{
+      if (is.character(.) || is.factor(.)) {
+        na_if(as.character(.), "")
+      } else {
+        .
+      }
+    }))
   
   # End of function
 }

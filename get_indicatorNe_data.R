@@ -106,9 +106,15 @@ get_indicatorNe_data<-function(kobo_output=kobo_output){
   # omit populations w/data (empty because they were not filled, this is ok)  
   filter(Origin!="")  %>% #origin is a mandatory question, so it should be answered, if not, the pop doesn't exist
 
-  # change all "" (empty) cells to NA
+  # change all "" (empty) cells to NA. Important: preserve original types (e.g. numeric stays numeric).
   
-  mutate(across(everything(),~na_if(as.character(.),""))) %>%
+      mutate(across(everything(), ~{
+        if (is.character(.) || is.factor(.)) {
+          na_if(as.character(.), "")
+        } else {
+          .
+        }
+      })) %>% 
       
   # change -999 to Na
   mutate(Ne=na_if(Ne, -999),

@@ -92,7 +92,15 @@ indicatorPM_data <- kobo_output %>%
   
                   # change all "" (empty) cells to NA
                   
-                 mutate(across(everything(),~na_if(as.character(.),"")))
+  # change all "" (empty) cells to NA. Important: preserve original types (e.g. numeric stays numeric).
+  
+  mutate(across(everything(), ~{
+    if (is.character(.) || is.factor(.)) {
+      na_if(as.character(.), "")
+    } else {
+      .
+    }
+  }))
                 
                 # End of function
                            }
