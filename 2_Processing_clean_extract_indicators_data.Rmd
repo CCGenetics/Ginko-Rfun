@@ -3,12 +3,14 @@ title: "Processing clean data to extract indicator data"
 output:
   html_document:
     df_print: paged
-    toc: yes
   word_document:
-    toc: yes
 ---
 
-This re-formats the raw data to the shape needed to calculate each of the genetic diversity indicators, and provides an indicator value per species. The input is the "clean kobo output" that was first cleaned in step 1. The output are the indicators data ready to be used to estimate the indicators and a single file with the indicators already calculated by species assessment.
+This notebook re-formats the data as outputed by Kobo to the shape needed to calculate each of the genetic diversity indicators. For example, in the Kobo output each species assessment is a single row, with population data in different columns, but to estimate the Ne indicator it is needed to have data of each population as a row. This script does that format transformation for you.
+
+Notice that **Nc is not transformed to Ne** at this stage and the **indicator values are not calculated**. This script only re-formats the data from the kobo-output so that you can use these data to estimate the indicators by yourself outside R (e.g. in Excel or other software), or continue to step 3 if you want to use the R functions and standard analyses of this repository.
+
+The input is the "clean kobo output" that was first cleaned in step 1. The output are the indicators data ready to be used to estimate the indicators.
 
 ## Variables that need to be set by the user
 
@@ -57,13 +59,13 @@ kobo_clean<-read.csv(file=kobo_clean, header=TRUE) # variable set at top of scri
 
 ## Extract Indicators data from the raw clean data, and show how it looks.
 
-## Metadata 
+### Metadata 
 Extracts the metadata for taxa and indicators, in some cases creating new useful variables, like taxon name (joining Genus, species, etc) and if the taxon was assessed only a single time or multiple times. Each row is a taxon.
 
 ```{r}
 # extract metadata, show most relevant columns
 metadata<-get_metadata(kobo_output=kobo_clean)
-head(metadata[,c(1:3, 12, 25,26, 64)])
+head(metadata[,c("country_assessment", "taxonomic_group" ,"taxon","X_uuid"            , "popsize_data" , "ne_pops_exists")])
 ```
 
 Some taxa were assessed twice or more times, for example to account for uncertainty on how to divide populations. This information is stored in variable `multiassessment` of the metadata (created by `get_metadata()`). 
@@ -88,34 +90,33 @@ Example of how the output data looks:
 ```{r}
 # Extract indicator Ne data from kobo output, show most relevant columns:
 indNe_data<-get_indicatorNe_data(kobo_output=kobo_clean)
-head(ind1_data[,c(1:3, 12:14)])
+head(indNe_data[,c("taxon", "defined_populations", "population", "Origin", "Ne", "NcType", "NcRange")])
 
 ```
 
 Note that if the Population information template was used (species with more than 25 populations) you will need to run an additional step before analysing the data, see below (Getting the population data if the template was used). In the output, each population is a row, and there are as many rows per taxon as there are populations within it. (PENDING TO UPDATE)
 
-## PM indicator
+### PM indicator
 This step outputs a data frame with the data needed to estimate the PM indicator (the proportion of Populations Maintained within species). Each row is a taxon.
 
 Example of how the output data looks:
 ```{r}
 # Extract data to estimate the PM indicator from kobo output, show most relevant columns:
 indPM_data<-get_indicatorPM_data(kobo_output=kobo_clean)
-head(ind2_data[,c(1:3, 9:10,13)])
+head(indPM_data[,c("taxonomic_group", "taxon", "defined_populations", "n_extant_populations","n_extint_populations" )])
 ```
-## DNA-based indicator
+### DNA-based indicator
 This step outputs a data frame with the data needed to estimate the genetic monitoring indicator (number of species in which genetic diversity has been or is being monitored using DNA-based methods). Each row is a taxon.
 
 ```{r}
 # Extract indicator 3 data from kobo output, show most relevant columns
-ind3_data<-get_indicator3_data(kobo_output=kobo_clean)
-head(ind3_data[,c(1:3, 9:11)])
+indDNAbased_data<-get_indicatorDNAbased_data(kobo_output=kobo_clean)
+head(indDNAbased_data[,c(1:3, 9:11)])
 ```
 
-
+## Save indicators data
 You can go ahead and use these data to estimate the indicators by yourself (e.g. in Excel or other software), or you can continue to step 3 if you want to use the R functions and standard analyses of this repository.
 
-### Save indicators data
 Save indicators data and metadata to csv files, useful for analyses outside R.
 
 ```{r}
@@ -130,7 +131,7 @@ write.csv(metadata, "metadata.csv", row.names = FALSE)
 
 ## General description of records and taxa assessed by country
 
-
+(pending)
 
 
 ## Session Info for reproducibility purposes:
