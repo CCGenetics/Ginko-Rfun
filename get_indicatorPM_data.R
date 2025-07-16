@@ -1,23 +1,24 @@
 ###
 ### This R function takes as input the output of the Kobo form "International Genetic Indicator testing" 
 ### and reformat its in order to have the data in a dataframe useful for estimating 
-### Genetic Diversity Indicator 2 (the proportion of populations within species which are maintained)
+### Genetic Diversity Indicator PM (the proportion of Populations within species which are Maintained)
 ### the function also creates new useful variables, 
 ### like taxon name and if the taxon was assessed only a single time or multiple times
 ### 
 
-### If you use this script, please check https://github.com/AliciaMstt/GeneticIndicators 
+### If you use this script, please check https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/Contact_cite/Contact_cite.html
 ### for citation guidelines
 
 
-get_indicator2_data<-function(kobo_output=kobo_output){
+get_indicatorPM_data<-function(kobo_output=kobo_output){
 
 ### Arguments:
   
   # kobo_output = a data frame object read into R from the `.csv` file 
   # resulting from exporting the Kobotoolbox data from the form 
   # "International Genetic Indicator testing" wit the settings explaiend at
-  # https://github.com/AliciaMstt/GeneticIndicators
+  # https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/5_Data_collection/Kobo_toolbox_help.html
+  # you can use the raw data, or clean it before.
   
 ### Needed libraries:  
   
@@ -64,8 +65,8 @@ kobo_output <- kobo_output %>%
     X_uuid %in% kobo_output_duplicates$X_uuid, "multiassessment", "single_assessment"))
 
 
-## get indicator 2 data
-indicator2_data <- kobo_output %>% 
+## get indicator PM data
+indicatorPM_data <- kobo_output %>% 
   
                  # create variable with year in which assessment was done (based on date the form was compleated)
                  mutate(year_assesment=substr(end,1,4)) %>%

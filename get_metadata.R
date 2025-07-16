@@ -4,7 +4,7 @@
 ### like taxon name and if the taxon was assessed only a single time or multiple times
 ### 
 
-### If you use this script, please check https://github.com/AliciaMstt/GeneticIndicators 
+### If you use this script, please check https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/Contact_cite/Contact_cite.html
 ### for citation guidelines
 
 
@@ -15,7 +15,8 @@ get_metadata<-function(kobo_output=kobo_output){
   # kobo_output = a data frame object read into R from the `.csv` file 
   # resulting from exporting the Kobotoolbox data from the form 
   # "International Genetic Indicator testing" wit the settings explaiend at
-  # https://github.com/AliciaMstt/GeneticIndicators
+  # https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/5_Data_collection/Kobo_toolbox_help.html
+  # you can use the raw data, or clean it before.
   
   ### Needed libraries:  
   

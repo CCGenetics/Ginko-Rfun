@@ -5,10 +5,10 @@
 ###                                a genetically effective size, Ne, greater than 500.)
 ### 
 
-### If you use this script, please check https://github.com/AliciaMstt/GeneticIndicators 
+### If you use this script, please check https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/Contact_cite/Contact_cite.html
 ### for citation guidelines
 
-get_indicator1_data<-function(kobo_output=kobo_output){
+get_indicatorNe_data<-function(kobo_output=kobo_output){
   ###
   ### Arguments:
   ###
@@ -16,7 +16,8 @@ get_indicator1_data<-function(kobo_output=kobo_output){
   # kobo_output = a data frame object read into R from the `.csv` file 
   # resulting from exporting the Kobotoolbox data from the form 
   # "International Genetic Indicator testing" wit the settings explaiend at
-  # https://github.com/AliciaMstt/GeneticIndicators
+  # https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/5_Data_collection/Kobo_toolbox_help.html
+  # you can use the raw data, or clean it before.
   
   ### Needed libraries:  
   
@@ -63,7 +64,7 @@ get_indicator1_data<-function(kobo_output=kobo_output){
   
    ### Process data already including taxon column and multiassessment
    
-    indicator1_data <- kobo_output %>% 
+    indicatorNe_data <- kobo_output %>% 
       
     # create variable with year in which assessment was done (based on date the form was completed)
     mutate(year_assesment=substr(end,1,4)) %>%
