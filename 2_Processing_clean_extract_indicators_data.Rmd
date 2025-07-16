@@ -66,6 +66,20 @@ metadata<-get_metadata(kobo_output=kobo_clean)
 head(metadata[,c(1:3, 12, 25,26, 64)])
 ```
 
+Some taxa were assessed twice or more times, for example to account for uncertainty on how to divide populations. This information is stored in variable `multiassessment` of the metadata (created by `get_metadata()`). 
+
+Check if there are taxa with multiple assessments in this dataset:
+
+```{r}
+metadata %>%
+filter(multiassessment=="multiassessment")  %>%
+  select(taxonomic_group, taxon, country_assessment, multiassessment) %>%
+  arrange(taxon, country_assessment) %>%
+  head()
+  
+```
+
+Alternative assessments allow to account for uncertainty in the number of populations or the size of them. We can examine how the indicators value species by species as done elsewhere in these analyses (see below "Values for indicator Ne and PM for multiassessed species),
 
 ### Ne 500 indicator
 This step extracts and formats the data needed to estimate the **Ne 500 indicator** (the proportion of populations within species with an effective population size Ne greater than 500). **In the kobo output, population data is in different columns, this function transforms it so that population data is in rows.** This is needed for downstream analyses. 
@@ -114,232 +128,7 @@ write.csv(metadata, "metadata.csv", row.names = FALSE)
 ```
 
 
-
-## PENDING Averaging multiassessments (alternative assessments)
-Some taxa were assessed twice or more times, for example to account for uncertainty on how to divide populations. This information is stored in variable `multiassessment` of the metadata (created by `get_metadata()`). An example of taxa with multiple assessments:
-
-```{r}
-metadata %>%
-filter(multiassessment=="multiassessment")  %>%
-  select(taxonomic_group, taxon, country_assessment, multiassessment) %>%
-  arrange(taxon, country_assessment) %>%
-  head()
-  
-```
-
-Alternative assessments allow to account for uncertainty in the number of populations or the size of them. We can examine how the indicators value species by species as done elsewhere in these analyses (see below "Values for indicator Ne and PM for multiassessed species), but to examine global trends, some of the figures below use the average. **The averages are stored in a different column, labeled `indicator[1 or 2]_mean`.**
-
-```{r}
-indicators_averaged<-indicators_full %>%
-  # group desired multiassessments
-  group_by(country_assessment, multiassessment, taxon) %>%
-  # estimate means
-  mutate(indicator1_mean=mean(indicator1, na.rm=TRUE)) %>%
-  mutate(indicator2_mean=mean(indicator2, na.rm=TRUE)) %>%
-  # change NaN for NA (needed due to the NAs and 0s in the dataset)
-  mutate_all(~ifelse(is.nan(.), NA, .)) 
-```
-
-Examples of how this looks to check it was done properly. For indicator 1:
-
-A species assessed in different countries (Sweden and Belgium), with alternative assessment within Sweden. The average is computed only for the Swedish assessments
-```{r}
-
-indicators_averaged %>%
-  filter(taxon == "Barbastella barbastellus") %>%
-  select(taxon, country_assessment, multiassessment, indicator1, indicator1_mean)
-
-
-```
-Alternative assessments within a single country:
-```{r}
-indicators_averaged %>%
-  filter(taxon == "Rana dalmatina") %>%
-  select(taxon, country_assessment, multiassessment, indicator1, indicator1_mean, indicator2, indicator2_mean)
-
-indicators_averaged %>%
-  filter(taxon == "Notophthalmus perstriatus") %>%
-  select(taxon, country_assessment, multiassessment,  indicator1, indicator1_mean, indicator2, indicator2_mean)
-
-```
-
-If one of the alternative assessments has NA, it is removed from the mean calculation, so that the average equals the value of the assessment that has data:
-```{r}
-indicators_averaged %>%
-  filter(taxon == "Alouatta palliata mexicana") %>%
-  select(taxon, country_assessment, multiassessment,  indicator1, indicator1_mean, indicator2, indicator2_mean)
-```
-
-A species can have alternative assessments for both indicators:
-```{r}
-indicators_averaged %>%
-  filter(taxon == "Aphelocoma coerulescens") %>%
-  select(taxon, country_assessment, multiassessment, indicator1, indicator1_mean, indicator2, indicator2_mean)
-
-```
-
-
-Because we will use the averages to show a single value for multiasssessed taxa, we can keep only the first record for multiassessed taxa.
-```{r}
-indicators_averaged_one<-indicators_averaged[!duplicated(cbind(indicators_averaged$taxon, indicators_averaged$country_assessment)), ]
-
-```
-
-
-Example of how this looks:
-```{r}
-indicators_averaged_one %>%
-  filter(taxon == "Aphelocoma coerulescens") %>%
-  select(taxon, country_assessment, multiassessment, indicator2, indicator2_mean, indicator1, indicator1_mean)
-
-
-indicators_averaged_one %>%
-  filter(taxon == "Rana dalmatina") %>%
-  select(taxon, country_assessment, multiassessment, indicator2, indicator2_mean, indicator1, indicator1_mean)
-
-
-indicators_averaged_one %>%
-  filter(taxon == "Notophthalmus perstriatus") %>%
-  select(taxon, country_assessment, multiassessment, indicator2, indicator2_mean, indicator1, indicator1_mean)
-
-```
-
-Total number of taxa (ie assessments averaging alternative assessments):
-```{r}
-nrow(indicators_averaged_one)
-```
-
-
 ## General description of records and taxa assessed by country
-
-Records by country, including taxa assessed more than once (see below for details on this)
-
-```{r  taxa by country, out.width="700px", out.height="400px"}
-ggplot(metadata, aes(x=country_assessment)) + 
-  geom_bar(stat = "count") +
-  xlab("") +
-  ggtitle("Number of taxa assessed by country, including taxa assed more than once") +
-  theme_light()
-
-```
-
-To explore what kind of taxa countries assessed regardless of if they assessed them once or more, we are going to use the subset `indicators_averaged_one`, were we averaged the indicators and kept only 1 record per assessment. 
-
-How many taxa were assessed (i.e. counting only once taxa that were assessed multiple times)?
-```{r}
-# how many?
-nrow(indicators_averaged_one)
-```
-
-Plot taxa assessed excluding duplicates, i.e. the real number of taxa assessed:
-
-```{r, out.width="700px", out.height="400px"}
-p1<-ggplot(indicators_averaged_one, aes(x=country_assessment)) + 
-  geom_bar(stat = "count") +
-  xlab("") +
-  ggtitle("Number of taxa assessed by country") +
-  theme_light()
-p1
-
-```
-
-Of which countries and taxonomic groups are the taxa that were assessed more than once?
-```{r multiassessed}
-p2<- indicators_averaged_one %>% # we use the _unique dataset so that multiassesed records are counted only once
-        filter(multiassessment=="multiassessment") %>%
-
-ggplot(aes(x=taxonomic_group, fill=country_assessment)) + 
-  geom_bar(stat = "count") +
-  theme(axis.text.x = element_text(angle = 45)) +
-  labs(fill="Country") +
-  xlab("") +
-  ggtitle("Number of taxa assessed more than once") +
-  theme_light()
-
-p2
-```
-
-
-Total number of taxon with alternative assessments:
-```{r}
-nrow(indicators_averaged_one %>% filter(multiassessment == "multiassessment"))
-```
-
-Number of alternative assessments:
-```{r}
-nrow(indicators_averaged%>% filter(multiassessment == "multiassessment"))
-```
-
-
-How many alternative assessments there are per multiassessed taxon?
-```{r}
-x<-indicators_averaged %>% select(country_assessment, multiassessment, taxon) %>%
-                         filter(multiassessment == "multiassessment") %>%
-                        group_by(taxon)  %>%
-                        summarise(n=n())
-
-kable(x)
-
-mean(x$n)
-sd(x$n)
-median(x$n)
-```
-
-### Supplementary Figure S1: Number of species and multiassessed species per country
-
-```{r}
-plot_grid(p1 + ggtitle(""),
-          p2 + ggtitle(""), ncol = 1, labels = c("A)", "B)"))
-
-ggsave("FigS1.pdf", width = 20, height = 24  , units = "cm")
-
-```
-
-
-### Heatmap of the taxa assessed by country (counting multiassessments only once)
-
-We aimed to represent different taxonomic groups within animals (amphibians, birds, fishes, invertebrates, mammals and reptiles), plants (angiosperms, bryophytes, gymnosperms and pteridophytes), fungi and others (e.g. lichens). Order levels to represent those categories:
-
-```{r}
-indicators_averaged_one$taxonomic_group<- factor(indicators_averaged_one$taxonomic_group,
-                                                 levels = c("amphibian", "bird", "fish", "invertebrate", "mammal", "reptile", "angiosperm", "bryophyte", "gymnosperm", "pteridophytes", "fungus", "other"))
-```
-
-Make a heatmap
-
-```{r}
-
-## Agregate data to get counts 
-
-agg_data <- indicators_averaged_one %>% # we use the _unique dataset so that multiassesed records are counted only once
-        filter(multiassessment!="multiassessment") %>%
-        group_by(country_assessment, taxonomic_group) %>%
-        summarize(count = n())
-
-# country names in desired order
-agg_data$country_assessment <- factor(agg_data$country_assessment, 
-                                      levels = rev(levels(agg_data$country_assessment)))
-  
-  
-## Create a heat map
-p_heat<- ggplot(agg_data, aes(x = taxonomic_group, y = country_assessment, fill = count)) + 
-  geom_tile() + 
-  scale_fill_gradient(low = "lightblue", high = "darkblue") +  # Adjust color scale as needed
-  labs(x = "",
-    y = "",
-    fill = "Number of taxa"
-  ) + 
-  scale_x_discrete(position = "top") +
-  theme_light() + 
-  theme(panel.border = element_blank(), axis.text.x = element_text(angle = 90, hjust = 0),
-    legend.position = "right", text = element_text(size = 13),
-    panel.grid.major = element_blank(), panel.grid.minor = element_blank(), # remove background
-  )
-p_heat
-  
-```
-
-
 
 
 
