@@ -108,7 +108,7 @@ get_indicatorNe_data<-function(kobo_output=kobo_output){
 
   # change all "" (empty) cells to NA
   
-  mutate_all(list(~na_if(.,""))) %>%
+  mutate(across(everything(),~na_if(as.character(.),""))) %>%
       
   # change -999 to Na
   mutate(Ne=na_if(Ne, -999),

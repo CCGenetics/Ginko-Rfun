@@ -83,8 +83,7 @@ metadata <- kobo_output %>%
                   longevity_age, life_history_based_on, life_history_sp_basedon, sources_life_history) %>%
 
      # change all "" (empty) cells to NA
-          
-       mutate_all(list(~na_if(.,""))) %>%
+                mutate(across(everything(),~na_if(as.character(.),""))) %>%
 
     # change "" in kobo_tabular to "kobo" ("" means that question was not answered because the taxon had less populations that the min to trigger tabular)
     mutate(kobo_tabular=ifelse(is.na(kobo_tabular), "kobo", kobo_tabular)) 

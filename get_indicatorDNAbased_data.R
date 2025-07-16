@@ -10,7 +10,7 @@
 ### for citation guidelines
 
 
-get_indicator3_data<-function(kobo_output=kobo_output){
+get_indicatorDNAbased_data<-function(kobo_output=kobo_output){
   
   ### Arguments:
   
@@ -87,7 +87,7 @@ get_indicator3_data<-function(kobo_output=kobo_output){
   
   # change all "" (empty) cells to NA
   
-  mutate_all(list(~na_if(.,"")))
+  mutate(across(everything(),~na_if(as.character(.),"")))
 
   
   # End of function
