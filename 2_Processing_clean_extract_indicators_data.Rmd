@@ -6,9 +6,14 @@ output:
   word_document:
 ---
 
-This notebook re-formats the data as outputed by Kobo to the shape needed to calculate each of the genetic diversity indicators. For example, in the Kobo output each species assessment is a single row, with population data in different columns, but to estimate the Ne indicator it is needed to have data of each population as a row. This script does that format transformation for you.
 
-Notice that **Nc is not transformed to Ne** at this stage and the **indicator values are not calculated**. This script only re-formats the data from the kobo-output so that you can use these data to estimate the indicators by yourself outside R (e.g. in Excel or other software), or continue to step 3 if you want to use the R functions and standard analyses of this repository.
+This notebook perofms the following:
+
+1) it re-formats the data as outputed by Kobo to the shape needed to calculate each of the genetic diversity indicators. For example, in the Kobo output each species assessment is a single row, with population data in different columns, but to estimate the Ne indicator it is needed to have data of each population as a row. This script does that format transformation for you.
+
+2) and transforms Nc to Ne based on a custom Nc:Ne ratio.
+
+Notice that at this stage the **indicator values are not calculated**. This script only re-formats the data from the kobo-output so that you can use these data to estimate the indicators by yourself outside R (e.g. in Excel or other software), or continue to step 3 if you want to use the R functions and standard analyses of this repository.
 
 The input is the "clean kobo output" that was first cleaned in step 1. The output are the indicators data ready to be used to estimate the indicators.
 
@@ -19,6 +24,13 @@ The file with the kobo clean data (kobo raw output data after quality check of s
 ```{r}
 kobo_clean<-"kobo_output_clean.csv"
 ```
+
+The desired Nc:Ne ratio to transform Nc to Ne. Should range 0.0-1.0, using ".". Defaults to 0.1
+
+```{r}
+ratio<-0.1
+```
+
 
 
 ## Packages and functions
@@ -57,7 +69,7 @@ Get indicators and metadata data from clean kobo output:
 kobo_clean<-read.csv(file=kobo_clean, header=TRUE) # variable set at top of script
 ```
 
-## Extract Indicators data from the raw clean data, and show how it looks.
+## Get and transform data.
 
 ### Metadata 
 Extracts the metadata for taxa and indicators, in some cases creating new useful variables, like taxon name (joining Genus, species, etc) and if the taxon was assessed only a single time or multiple times. Each row is a taxon.
@@ -83,18 +95,76 @@ filter(multiassessment=="multiassessment")  %>%
 
 Alternative assessments allow to account for uncertainty in the number of populations or the size of them. We can examine how the indicators value species by species as done elsewhere in these analyses (see below "Values for indicator Ne and PM for multiassessed species),
 
+
 ### Ne 500 indicator
-This step extracts and formats the data needed to estimate the **Ne 500 indicator** (the proportion of populations within species with an effective population size Ne greater than 500). **In the kobo output, population data is in different columns, this function transforms it so that population data is in rows.** This is needed for downstream analyses. 
+This step extracts and formats the data needed to estimate the **Ne 500 indicator** (the proportion of populations within species with an effective population size Ne greater than 500). This includes transforming Nc data to Ne using a Nc:Ne ratio, defined by the user.
+
+#### Transposne population data from columns to rows
+In the kobo output, **population data is in different columns**, this function transforms it so that **population data is in rows.** This is needed for downstream analyses. 
 
 Example of how the output data looks:
 ```{r}
 # Extract indicator Ne data from kobo output, show most relevant columns:
 indNe_data<-get_indicatorNe_data(kobo_output=kobo_clean)
-head(indNe_data[,c("taxon", "defined_populations", "population", "Origin", "Ne", "NcType", "NcRange")])
+head(indNe_data[,c("taxon", "population", "Origin", "Ne", "NeLower", "NeUpper", "NcType", "NcRange", "NcPoint", "NcLower", "NcUpper")])
 
 ```
 
-Note that if the Population information template was used (species with more than 25 populations) you will need to run an additional step before analysing the data, see below (Getting the population data if the template was used). In the output, each population is a row, and there are as many rows per taxon as there are populations within it. (PENDING TO UPDATE)
+#### Adding population data from Kobo-tabular template format 
+(PENDING TO UPDATE) Note that if the Population information template was used (species with more than 25 populations) you will need to run an additional step before analysing the data (Getting the population data if the template was used). In the output, each population is a row, and there are as many rows per taxon as there are populations within it. (PENDING TO UPDATE)
+
+#### Transforming Nc to Ne
+
+In the Kobo form, Ne and Nc data are collected in the ways explained below. 
+
+* **Ne (effective population size) from genetic analyses**, ie by software like NeEstimator or Gone. The estimate and its lower an upper limits are stored as numbers in the columns `Ne`, `NeLower`, `NeUpper`. These columns are not modified during processing.
+
+* **Nc (number of mature individuals) from point estimates**, that is quantitative data with or without confidence intervals. The estimate and its lower an upper limits, if available, are stored as numbers in the columns `NcPoint`, `NcLower`, `NcUpper`.
+
+* **Nc (number of mature individuals) from quantitative range or qualitative data**, these are the ranges that in the kobo form show options like "<5,000 by much" or "< 5,000 but not by much (tens or a few hundred less)". The estimate is stored as text in the column `NcRange`. 
+
+This steps uses the function `transform_to_Ne()` to transform Nc estimates and their lower an upper estimates to Ne based on the Nc:Ne ratio the user decides.
+
+For `NcPoint`, `NcLower`, `NcUpper` columns (Nc from point estimates) Nc is transformed to Ne done by multiplying them for the desired ratio. 
+
+For `NcRange`columns (Nc from quantitative range or qualitative data) the range options (text) are first translated to numbers following this rule:
+
+* "more_5000_bymuch" to 10000
+* "more_5000" to 5500
+* "less_5000_bymuch" to 500
+* "less_5000" to 4050
+* "range_includes_5000" to 5001
+
+This is stored in the new column `Nc_from_range`.  
+And then, to transform Nc to Ne it is multiplied for the desired ratio.
+
+Regardless if the Nc data was NcPoint or NcRange, after transforming it to Ne it is stored in the column `Ne_from_Nc`. Notice that the column `NcType` (part of the Koboform original variables) states if Nc data came from NcPoint or NcRange. If the type as NcPoint and there were lower and upper intervals, they are also transformed to Ne and stored in the columns `NeLower_from_Nc`, `NeUpper_from_Nc`.
+
+Finally, a new column `Ne_combined` is created combining data from Ne genetic estimates, with the Ne from transforming Nc using the ratio. For this, if both Ne from genetic data and from transforming Nc exist, the Ne from genetic data is given preference. 
+
+For transparency, the column `Ne_calculated_from` specifies for each population were the data to estimate Ne came from. Options are:  "genetic data", "NcPoint ratio", and "NcRange ratio", as explained above.
+
+You can see the guts of what the function does here:
+```{r}
+# check what the custom function does
+transform_to_Ne
+```
+
+Use `transform_to_Ne` function to get Ne data from NcRange or NcPoint data, and their combination (Ne estimated from Ne if Ne is available, otherwise, from Nc)
+
+```{r}
+indNe_data<-transform_to_Ne(indNe_data = indNe_data, 
+                            ratio = ratio) # variable set at the start of this notebook
+```
+
+Check transformation in example:
+```{r}
+indNe_data %>% 
+  select(taxon, population, Name, Ne, NeLower, NeUpper, NeYear, GeneticMarkers, NcType, NcMethod, NcPoint, NcLower, NcUpper, NcRange, Nc_from_range, Ne_from_Nc, NeLower_from_Nc, NeUpper_from_Nc, Ne_combined)  %>% 
+  head(20)
+   
+```
+
 
 ### PM indicator
 This step outputs a data frame with the data needed to estimate the PM indicator (the proportion of Populations Maintained within species). Each row is a taxon.
@@ -105,6 +175,8 @@ Example of how the output data looks:
 indPM_data<-get_indicatorPM_data(kobo_output=kobo_clean)
 head(indPM_data[,c("taxonomic_group", "taxon", "defined_populations", "n_extant_populations","n_extint_populations" )])
 ```
+
+
 ### DNA-based indicator
 This step outputs a data frame with the data needed to estimate the genetic monitoring indicator (number of species in which genetic diversity has been or is being monitored using DNA-based methods). Each row is a taxon.
 
@@ -127,11 +199,6 @@ write.csv(indDNAbased_data, "indDNAbased_data.csv", row.names = FALSE)
 write.csv(metadata, "metadata.csv", row.names = FALSE)
 
 ```
-
-
-## General description of records and taxa assessed by country
-
-(pending)
 
 
 ## Session Info for reproducibility purposes:

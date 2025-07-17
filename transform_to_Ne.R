@@ -3,7 +3,7 @@ transform_to_Ne<-function(indNe_data, ratio=0.1){
 ## multiplying for a ratio Ne:Ne (defaults to 0.1 if none provided)
  
 ## Arguments
-## indNe_data as produced by get_indicator1_data()
+## indNe_data as produced by get_indicatorNe_data()
 ## desired Ne:Nc ratio. Should range 0-1. Defaults to 0.1
   
 ## output
@@ -11,9 +11,8 @@ transform_to_Ne<-function(indNe_data, ratio=0.1){
 # Nc_from_range (conversion of "more than..." to numbers)
 # Ne_from_Nc: Ne estimated from NcRange or NcPoint  
 # Ne_combined: Ne estimated from Ne if Ne is available, otherwise, from Nc
-
-# And with more columns for lower and upper intervals for Nc
-# Ne    
+# NeLower_from_Nc, NeUpper_from_Nc: lower and upper intervals transformed to Ne when data is NcPoint
+# Ne_calculated_from: specifies for each population were the data to estimate Ne came from. Options are:  "genetic data", "NcPoint ratio", and "NcRange ratio"
   
   ### Function
   
