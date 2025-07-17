@@ -7,7 +7,7 @@ output:
 ---
 
 
-This notebook perofms the following:
+This notebook performs the following:
 
 1) it re-formats the data as outputed by Kobo to the shape needed to calculate each of the genetic diversity indicators. For example, in the Kobo output each species assessment is a single row, with population data in different columns, but to estimate the Ne indicator it is needed to have data of each population as a row. This script does that format transformation for you.
 
@@ -100,7 +100,7 @@ Alternative assessments allow to account for uncertainty in the number of popula
 This step extracts and formats the data needed to estimate the **Ne 500 indicator** (the proportion of populations within species with an effective population size Ne greater than 500). This includes transforming Nc data to Ne using a Nc:Ne ratio, defined by the user.
 
 #### Transposne population data from columns to rows
-In the kobo output, **population data is in different columns**, this function transforms it so that **population data is in rows.** This is needed for downstream analyses. 
+In the kobo output, **population data is in different columns**, this step transforms it with the function `get_indicatorNe_data()` so that **population data is in rows.** This is needed for downstream analyses. 
 
 Example of how the output data looks:
 ```{r}
