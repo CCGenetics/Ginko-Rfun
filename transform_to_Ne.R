@@ -1,17 +1,19 @@
-transform_to_Ne<-function(ind1_data, ratio=0.1){
+transform_to_Ne<-function(indNe_data, ratio=0.1){
 ## This functions gets the Nc data from point or range estimates and transforms it to Ne 
 ## multiplying for a ratio Ne:Ne (defaults to 0.1 if none provided)
  
-## Argumetns
-## ind1_data as produced by get_indicator1_data()
+## Arguments
+## indNe_data as produced by get_indicator1_data()
 ## desired Ne:Nc ratio. Should range 0-1. Defaults to 0.1
   
 ## output
-## Original ind1_data df with two more columns:
+## Original indNe_data df with more columns for Ne:
 # Nc_from_range (conversion of "more than..." to numbers)
 # Ne_from_Nc: Ne estimated from NcRange or NcPoint  
 # Ne_combined: Ne estimated from Ne if Ne is available, otherwise, from Nc
-  
+
+# And with more columns for lower and upper intervals for Nc
+# Ne    
   
   ### Function
   
@@ -23,9 +25,9 @@ if (!is.numeric(ratio) || ratio < 0 || ratio > 1) {
 } else {
       
     ## process data:
-      ind1_data = ind1_data
+      indNe_data = indNe_data
       
-      ind1_data<-ind1_data %>% 
+      indNe_data<-indNe_data %>% 
         
         # transform NcRange values to numeric values
         mutate(Nc_from_range = case_when(
@@ -43,6 +45,14 @@ if (!is.numeric(ratio) || ratio < 0 || ratio > 1) {
                     # if there is NcRange data (already converted to numeric values), use it multiplying by the ratio
                     !is.na(Nc_from_range) ~ Nc_from_range * ratio)) %>% 
         
+        # Get lower and upper Ne intervals from Nc point data
+          # if there is NcPoint LOWER bound data, use it multiplying by the ratio
+          mutate(NeLower_from_Nc = case_when(!is.na(NcLower) ~ NcLower*ratio))  %>%
+          
+          # if there is NcPoint UPPER bound data, use it multiplying by the ratio
+          mutate(NeUpper_from_Nc = case_when(!is.na(NcUpper) ~ NcLower*ratio))  %>%
+        
+               
         # Get the Ne combining all different sources
         mutate(Ne_combined = if_else(is.na(Ne), # here TRUE means Ne is NA
                                      Ne_from_Nc, # if genetic data is not available (Ne is NA) then use the Ne estimated from Nc data
@@ -65,6 +75,6 @@ if (!is.numeric(ratio) || ratio < 0 || ratio > 1) {
                                         "genetic data")
                ) 
         
-      print(ind1_data)
+      print(indNe_data)
     }
 }
