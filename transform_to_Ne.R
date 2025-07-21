@@ -49,7 +49,7 @@ if (!is.numeric(ratio) || ratio < 0 || ratio > 1) {
           mutate(NeLower_from_Nc = case_when(!is.na(NcLower) ~ NcLower*ratio))  %>%
           
           # if there is NcPoint UPPER bound data, use it multiplying by the ratio
-          mutate(NeUpper_from_Nc = case_when(!is.na(NcUpper) ~ NcLower*ratio))  %>%
+          mutate(NeUpper_from_Nc = case_when(!is.na(NcUpper) ~ NcUpper*ratio))  %>%
         
                
         # Get the Ne combining all different sources
