@@ -42,6 +42,8 @@ If any entries need corrections, you have to go back to Kobo and correct the rel
 
 ## Step 2: Processing clean data to extract indicator data
 
+R Note book: [2_Processing_clean_extract_indicators_data.Rmd](2_Processing_clean_extract_indicators_data.Rmd)
+
 This notebook performs the following:
 
 1) it re-formats the data as outputed by Kobo to the shape needed to calculate each of the genetic diversity indicators. For example, in the Kobo output each species assessment is a single row, with population data in different columns, but to estimate the Ne indicator it is needed to have data of each population as a row. This script does that format transformation for you.
