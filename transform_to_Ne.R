@@ -54,8 +54,8 @@ if (!is.numeric(ratio) || ratio < 0 || ratio > 1) {
                
         # Get the Ne combining all different sources
         mutate(Ne_combined = if_else(is.na(Ne), # here TRUE means Ne is NA
-                                     Ne_from_Nc, # if genetic data is not available (Ne is NA) then use the Ne estimated from Nc data
-                                     Ne)) %>% # if there is Ne from genetic data, use it
+                                     as.double(Ne_from_Nc), # if genetic data is not available (Ne is NA) then use the Ne estimated from Nc data
+                                     as.double(Ne))) %>% # if there is Ne from genetic data, use it
         
         # Create a new variable specifying for each population were the data to estimate Ne came from
         mutate(Ne_calculated_from = if_else(is.na(Ne),  # here TRUE means Ne is NA
