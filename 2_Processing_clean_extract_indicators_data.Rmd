@@ -52,7 +52,6 @@ source("get_indicatorPM_data.R")
 source("get_indicatorDNAbased_data.R")
 source("get_metadata.R")
 source("transform_to_Ne.R")
-source("estimate_indicatorNe.R")
 ```
 
 Other custom functions:
@@ -173,7 +172,7 @@ Example of how the output data looks:
 ```{r}
 # Extract data to estimate the PM indicator from kobo output, show most relevant columns:
 indPM_data<-get_indicatorPM_data(kobo_output=kobo_clean)
-head(indPM_data[,c("taxonomic_group", "taxon", "defined_populations", "n_extant_populations","n_extint_populations" )])
+head(indPM_data[,c("taxonomic_group", "taxon", "defined_populations", "n_extant_populations","n_extinct_populations" )])
 ```
 
 

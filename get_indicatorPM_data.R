@@ -76,7 +76,7 @@ indicatorPM_data <- kobo_output %>%
                  dplyr::select(country_assessment, taxonomic_group, taxon, scientific_authority,
                                genus, taxon, year_assesment, name_assessor, email_assessor,
                  # indicator 2 data (section 3 of the form)              
-                               n_extant_populations, n_extint_populations, other_populations, time_populations,
+                               n_extant_populations, n_extinct_populations, other_populations, time_populations,
                                defined_populations, source_definition_populations, map_populations, map_populations_URL,
                                habitat_decline_area, source_populations, 
                  # kobo validation status
@@ -87,7 +87,7 @@ indicatorPM_data <- kobo_output %>%
                 multiassessment) %>%
 
                  # change -999 to Na
-                         mutate(n_extint_populations=na_if(n_extint_populations, -999), 
+                         mutate(n_extinct_populations=na_if(n_extinct_populations, -999), 
                                 n_extant_populations=na_if(n_extant_populations, -999)) %>%
   
                   # change all "" (empty) cells to NA
