@@ -1,6 +1,9 @@
 ---
 title: "Plots by individual country"
-output: html_document
+output:
+  html_document:
+    df_print: paged
+    toc: yes
 ---
 
 
@@ -15,21 +18,15 @@ library(viridis)
 library(ggplot2)
 ```
 
-Load required functions. These custom fuctions are available at: https://github.com/AliciaMstt/GeneticIndicators
-
-```{r source}
-
-```
-
 Other custom functions:
-```{r custom_funs}
+```{r, echo=F, message=F, warning=F}
 ### not in
 '%!in%' <- function(x,y)!('%in%'(x,y))
 
 ```
 
 Custom colors:
-```{r custom colors}
+```{r custom colors, echo=F, message=F, warning=F}
 ## IUCN official colors
 # Assuming order of levels is: "re", "cr", "en", "vu", "nt", "lc", "dd", "not_assessed", "unknown" (for regional, and w/o "re" for global). Make sure to change the levels to that order before plotting.
 IUCNcolors<-c("brown2", "darkorange", "yellow", "green", "darkgreen", "darkgrey", "azure2", "bisque1")
@@ -41,7 +38,8 @@ taxoncolors<-cividis(12) # same than using cividis(length(levels(as.factor(metad
 ```
 
 ## Get data 
-Get clean data (output of step 2) ready to estimate the indicators:
+
+Get clean data (output of step 3) ready to estimate the indicators:
 
 ```{r, echo=TRUE}
 # Get data:
@@ -50,8 +48,9 @@ indNe_data<-read.csv("indNe_data.csv")
 ```
 
 
-Optional
-```{r}
+```{r, echo=F, message=F, warning=F}
+# Optional step if you have several countries in the dataset
+
 # Select which country you want to analyse. For this after "desired_country" in the code below, write the name of your country exactly as it is written in kobo (English lowercase, no spaces use "_" instead)
 
 desired_country<-"mexico"
@@ -63,7 +62,7 @@ indicators_full<-indicators_full %>% filter(country_assessment==desired_country)
 ```
 
 Which country is being analysed?
-```{r}
+```{r, echo=F, message=F, warning=F}
 desired_country<-unique(indicators_full$country_assessment)
 desired_country
 ```
@@ -73,22 +72,25 @@ desired_country
 
 `r desired_country` has a total of `r nrow(indicators_full)` records. Of those, some taxa could have been assessed more than once, for example to account for different methods to define populations.
 
-To explore what kind of taxa the country assessed regardless of if they assessed them once or more, lets create a dataset keeping all single assessed taxa, plus only the first assessment for taxa assessed multiple times. 
 
-```{r}
+```{r, echo=F, message=F, warning=F}
+# To explore what kind of taxa the country assessed regardless of if they assessed them once or more, lets create a dataset keeping all single assessed taxa, plus only the first assessment for taxa assessed multiple times. 
+
 # object with single assessed taxa, plus only the first assessment for taxa assessed multiple times
 firstmulti<-indicators_full[!duplicated(cbind(indicators_full$taxon, indicators_full$country_assessment)), ]
 
 ```
 
 How many taxa were assessed (i.e. counting only once taxa that were assessed multiple times)?
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 # how many?
 nrow(firstmulti)
 ```
 
 Which taxa where assessed more than once? (if any)
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 indicators_full[duplicated(cbind(indicators_full$taxon, indicators_full$country_assessment)), ]
 ```
 
@@ -96,7 +98,7 @@ indicators_full[duplicated(cbind(indicators_full$taxon, indicators_full$country_
 ### Taxonomic groups and endemicity
 
 
-```{r, out.width="700px", out.height="400px"}
+```{r, echo=F, message=F, warning=F, out.width="700px", out.height="400px"}
 ggplot(indicators_full, aes(x=taxonomic_group, fill=national_endemic)) + 
   geom_bar(stat = "count") +
   xlab("") +
@@ -107,7 +109,7 @@ ggplot(indicators_full, aes(x=taxonomic_group, fill=national_endemic)) +
 ```
 ### Proportion of species distribution within the country
 
-```{r, out.width="700px", out.height="400px"}
+```{r, echo=F, message=F, warning=F, out.width="700px", out.height="400px"}
 ggplot(indicators_full, aes(x=taxonomic_group, fill=country_proportion)) + 
   geom_bar(stat = "count") +
   xlab("") +
@@ -119,9 +121,9 @@ ggplot(indicators_full, aes(x=taxonomic_group, fill=country_proportion)) +
 
 ### Realm and habitat
 
-Realm
+Plot by Realm
 
-```{r}
+```{r, echo=F, message=F, warning=F}
 ggplot(indicators_full, aes(x=taxonomic_group, fill=realm)) + 
   geom_bar(stat = "count") +
   xlab("") +
@@ -130,9 +132,10 @@ ggplot(indicators_full, aes(x=taxonomic_group, fill=realm)) +
   theme(legend.position="bottom")
 ```
 
-Habytat type as IUCN categories (a species can inhabit more than one type of habitat, that is why there are so many groups)
+Habytat type as IUCN categories (a species can inhabit more than one type of habitat, that is why there are so many groups):
 
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 ggplot(indicators_full, aes(x=taxonomic_group, fill=IUCN_habitat)) + 
   geom_bar(stat = "count") +
   xlab("") +
@@ -145,7 +148,8 @@ ggplot(indicators_full, aes(x=taxonomic_group, fill=IUCN_habitat)) +
 ### Population size data availability
 
 Population size (Nc or Ne) data availability at the taxon level:
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 ggplot(indicators_full, aes(x=taxonomic_group, fill=popsize_data)) + 
   geom_bar(stat = "count") +
   coord_flip() +
@@ -159,8 +163,10 @@ ggplot(indicators_full, aes(x=taxonomic_group, fill=popsize_data)) +
   theme(panel.border = element_blank(), legend.position="top")
   
 ```
+
 Ne available?
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 indicators_full %>% 
   filter(!is.na(ne_pops_exists)) %>% 
   filter(ne_pops_exists!="other_genetic_info") %>%
@@ -180,7 +186,8 @@ theme(text = element_text(size = 14), legend.position = "right", panel.border = 
 ```
 
 Nc data available by taxa?
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 indicators_full %>%
   filter(!is.na(nc_pops_exists)) %>%
     ggplot(aes(x=taxonomic_group, fill=nc_pops_exists)) +
@@ -195,7 +202,8 @@ indicators_full %>%
 ```
 
 What kind of Nc data?
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 indNe_data %>%
   filter(!is.na(NcType)) %>%
   ggplot(aes(x=taxonomic_group, fill=NcType))+
@@ -216,12 +224,12 @@ indNe_data %>%
 
 ## Methods used to define populations
 Frequency table of methods used to define population
-```{r}
+```{r, echo=F, message=F, warning=F}
 table(indicators_full$defined_populations)
 ```
 
 ### Plot number of populations by method
-```{r, out.height="500px", out.width="1064px"}
+```{r, echo=F, message=F, warning=F, out.height="500px", out.width="1064px"}
 # Prepare data for plot with nice labels:
 # sample size of TOTAL populations
 sample_size <- indicators_full %>%
@@ -255,34 +263,34 @@ df %>%
 
 ## Missing data on extant and extinct populations
 
-We have NA in indicator 2 because in some cases the number of extinct populations is unknown, therefore the operation cannot be computed. 
+We have NA in indicator PM because in some cases the number of extinct populations is unknown, therefore the operation cannot be computed. 
 
 ### Counts
 Total records with NA in extant populations:
-```{r}
+```{r, echo=F, message=F, warning=F}
 sum(is.na(indicators_full$n_extant_populations))
 ```
 
 Taxa with NA in extant populations:
-```{r}
+```{r, echo=F, message=F, warning=F}
 indicators_full %>%
   filter(is.na(n_extant_populations)) %>%
     select(taxonomic_group, taxon, n_extant_populations, n_extinct_populations)
 ```
 
 Total taxa with NA in **extinct** populations:
-```{r}
+```{r, echo=F, message=F, warning=F}
 sum(is.na(indicators_full$n_extinct_populations))
 ```
 
 Do taxa with NA for extant also have NA for extinct?
 
-```{r}
+```{r, echo=F, message=F, warning=F}
 indicators_full$taxon[is.na(indicators_full$n_extant_populations)] %in% indicators_full$taxon[is.na(indicators_full$n_extinct_populations)]
 ```
 
 ### Plot missing data extinct populations
-```{r}
+```{r, echo=F, message=F, warning=F}
 indicators_full %>%
   ggplot(aes(x=taxonomic_group, fill=is.na(n_extinct_populations))) +
   geom_bar() +
@@ -296,14 +304,57 @@ indicators_full %>%
 ```
 
 
+## Ne > 500 indicator
 
-## Ne > 500 indicator (indicator 1)
+In total, there was data to compute the Ne indicator in the following number of taxa:
 
-### Ne > 500 (indicator 1) by type of range
+```{r}
+sum(!is.na(indicators_full$indicatorNe))
+```
+
+Considering those `r sum(!is.na(indicators_full$indicatorNe))` taxa, the Ne indicator mean value for the country is:
+
+```{r, echo=F, message=F, warning=F}
+mean_ne <- mean(indicators_full$indicatorNe, na.rm = TRUE)
+mean_ne
+```
+
+### Ne indicator by taxon 
+
+```{r, echo=F, message=F, warning=F}
+indicators_full %>%
+  filter(!is.na(indicatorNe)) %>%
+  
+ggplot(aes(x = indicatorNe, y = reorder(taxon, indicatorNe))) +
+  geom_col(fill = "#0B2B4B") +
+  geom_vline(xintercept = mean_ne,
+             colour = "orange",
+             linetype = "dashed",
+             linewidth = 1) +
+  geom_text(aes(label = round(indicatorNe, 2),
+                x = indicatorNe + 0.02),                 # nudge labels slightly right
+            size = 3,
+            hjust = 0) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.02)),
+                     limits = c(0, 1)) +                 # adjust if indicatorNe is 0–1
+  labs(
+    x = "Proportion of populations within species > 500 Ne",
+    y = "",
+    title = ""
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    axis.text.y = element_text(size = 10)
+  )
+```
+
+
+### Ne > 500  by type of range
 
 By type of range in the entire dataset:
 
-```{r indicatorNe by range type}
+```{r, echo=F, message=F, warning=F}
 # get sample size by desired category
 sample_size <- indicators_full  %>%
                     filter(!is.na(indicatorNe)) %>% 
@@ -325,11 +376,11 @@ indicators_full  %>%
       theme(panel.border = element_blank(), legend.position="none", text= element_text(size=20))
 ```
 
-### Ne > 500 (indicator 1) by IUCN status
+### Ne > 500 by IUCN status
 
 By global IUCN:
 
-```{r indicatorNe gobalIUCN}
+```{r indicatorNe gobalIUCN, echo=F, message=F, warning=F}
 
 ## Global IUCN
 ## prepare data
@@ -379,7 +430,7 @@ df %>%
 
 By regional IUCN (this may make no sense for your country if there is no IUCN redlist assessments at regional level:
 
-```{r indicatorNe regionalIUCN}
+```{r, echo=F, message=F, warning=F}
 ## Regional IUCN
 
 ## prepare data
@@ -426,8 +477,8 @@ df %>%
 
 
 ```
-### Ne > 500 (indicator 1) by endemicity
-```{r}
+### Ne > 500 by endemicity
+```{r, echo=F, message=F, warning=F}
 # get sample size by desired category
 sample_size <- indicators_full  %>%
                     filter(!is.na(indicatorNe)) %>% 
@@ -454,27 +505,29 @@ indicators_full  %>%
 
 How is Ne data distributed? 
 
-```{r}
+```{r, echo=F, message=F, warning=F}
 summary(indNe_data$Ne)
 ```
 
 
 Boxplot of Ne values:
-```{r}
+```{r, echo=F, message=F, warning=F}
 indNe_data %>%
   ggplot(aes(x=taxonomic_group, y=Ne)) +
   geom_boxplot() + geom_point(aes(x=taxonomic_group, y=Ne))+
 theme_light()
 ```
+
 Check outliers (Ne very high):
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 indNe_data %>% 
   filter(Ne > 100000) %>%
   select(country_assessment, name_assessor, taxon, taxonomic_group, Ne, NeLower, NeUpper, multiassessment, population)
 ```
 
 Ne Boxplot filtering outliers (if any)
-```{r}
+```{r, echo=F, message=F, warning=F}
 indNe_data %>% filter(Ne < 100000) %>%
   ggplot(aes(x=taxonomic_group, y=Ne)) +
   geom_boxplot() + geom_point(aes(x=taxonomic_group, y=Ne))+
@@ -484,7 +537,7 @@ theme_light()
 ### Distribution of Nc values and ranges
 
 Point data
-```{r}
+```{r, echo=F, message=F, warning=F}
 indNe_data %>%
   ggplot(aes(x=taxonomic_group, y=NcPoint)) +
   geom_boxplot() + geom_point(aes(x=taxonomic_group, y=NcPoint))+
@@ -493,7 +546,8 @@ theme_light()
 ```
 
 Range data (categorical):
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 # re-order levels
 backupt<-indNe_data
 indNe_data$NcRange<-as.factor(indNe_data$NcRange)
@@ -517,10 +571,10 @@ theme_light()
 
 
 
-## Proportion of populations mantained (indicator 2)
+## Proportion of populations mantained (PM indicator)
 
-### Plot Proportion of populations mantained (indicator 2) by method
-```{r}
+### Plot Proportion of populations mantained (PM indicator) by method
+```{r, echo=F, message=F, warning=F}
 # Prepare data for plot with nice labels:
 # sample size of TOTAL populations
 sample_size <- indicators_full %>%
@@ -552,11 +606,12 @@ df %>%
 
 
 ```
+
 ### by type of range
 
 By type of range in the entire dataset:
   
-```{r indicatorPM by range}
+```{r, echo=F, message=F, warning=F}
 # get sample size by desired category
 sample_size <- indicators_full  %>%
   filter(!is.na(indicatorPM)) %>% 
@@ -582,7 +637,7 @@ indicators_full  %>%
 
 By global IUCN:
 
-```{r indicatorPM gobalIUCN}
+```{r, echo=F, message=F, warning=F}
 
 ## Global IUCN
 ## prepare data
@@ -631,8 +686,9 @@ df %>%
 ```
 
 By regional IUCN (this may make no sense for your country if there is no IUCN redlist assessments at regional level:
+
                     
-```{r indicatorPM regionalIUCN}
+```{r indicatorPM, echo=F, message=F, warning=F}
                   ## Regional IUCN
                   
                   ## prepare data
@@ -681,7 +737,8 @@ By regional IUCN (this may make no sense for your country if there is no IUCN re
 ```
 
 ### Proportion of maintained populations by endemicity
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 # get sample size by desired category
 sample_size <- indicators_full  %>%
                     filter(!is.na(indicatorPM)) %>% 
@@ -704,7 +761,8 @@ indicators_full  %>%
 ```
 
 ### Plot Scatter plot of indicatorPM and extant pops
-```{r}
+
+```{r, echo=F, message=F, warning=F}
 indicators_full %>%
   filter(!is.na(indicatorPM)) %>%
   # filter outliers with too many pops
