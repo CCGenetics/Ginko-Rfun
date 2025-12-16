@@ -1,32 +1,26 @@
 ---
-title: "Plots by individual country"
+title: "Genetic diversity indicators report for the GBF"
 output:
   html_document:
     df_print: paged
     toc: yes
 ---
 
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+### Load packages and functions, this is hidden form the report
 
-## Packages and functions
-
-Load required libraries:
-
-```{r, warning=FALSE, message=FALSE}
+# Load required libraries:
 library(tidyr)
 library(dplyr)
 library(viridis)
 library(ggplot2)
-```
 
-Other custom functions:
-```{r, echo=F, message=F, warning=F}
+# Other custom functions:
 ### not in
 '%!in%' <- function(x,y)!('%in%'(x,y))
 
-```
+# Custom colors
 
-Custom colors:
-```{r custom colors, echo=F, message=F, warning=F}
 ## IUCN official colors
 # Assuming order of levels is: "re", "cr", "en", "vu", "nt", "lc", "dd", "not_assessed", "unknown" (for regional, and w/o "re" for global). Make sure to change the levels to that order before plotting.
 IUCNcolors<-c("brown2", "darkorange", "yellow", "green", "darkgreen", "darkgrey", "azure2", "bisque1")
@@ -35,11 +29,36 @@ IUCNcolors_regional<-c("darkorchid2", "brown2", "darkorange", "yellow", "green",
 ## nice soft ramp for taxonomic groups
 taxoncolors<-cividis(12) # same than using cividis(length(levels(as.factor(metadata$taxonomic_group))))
   
+
 ```
 
-## Get data 
+## Introduction to genetic diversity 
 
-Get clean data (output of step 3) ready to estimate the indicators:
+Genetic diversity is variation at the DNA level, and includes differences among individuals within populations of species, as well as differences between populations of species.
+
+*Within populations*: the diversity within populations of a species helps a population adapt quickly to changing conditions, avoid inbreeding problems, and persist when environmental disturbances occur. Small populations will tend to lose genetic diversity more rapidly than large populations.
+
+
+*Between populations*: the diversity between populations of a species is critical for ensuring the adaptive potential of that species (e.g. to a range of environmental conditions). Loss of any unique, genetically distinct populations can compromise a species’ ability to adapt to change (anthropogenic or otherwise).
+
+It is therefore crucial that all populations be maintained, and that populations are sufficiently large to maintain genetic health. The genetic diversity indicators are based on these premises.
+
+## "Genetic indicator" of the Global Biodiversity Framework 
+
+Indicator name: A.4 The proportion of populations within species with an effective population size > 500 ("Ne 500 indicator")
+
+The "Ne 500 genetic diversity indicator" adopted at the Global Biodiversity Framework relates to [Goal A](https://www.cbd.int/gbf/goals): protect and restore; and [Target 4](https://www.cbd.int/gbf/targets/4): halt species extinction, protect genetic diversity, and manage human-wildlife conflicts.
+
+Effective population size (Ne) is a well-accepted metric for measuring the genetic diversity within populations of wild species. An Ne above 500 (usually, but not always, equivalent to a census population size above 5,000) is widely viewed as sufficient to maintain genetic diversity within populations of a given species.
+
+Populations that are small in size (effective population size Ne < 500) are highly susceptible to rapid loss of genetic diversity and are at high risk of extinction due to genetic threats.
+
+See the [indicator GBF's metadata](https://www.gbf-indicators.org/metadata/headline/A-4) for more details.
+
+
+## Raw data used
+
+The following files have the raw data used to produce the present report:
 
 ```{r, echo=TRUE}
 # Get data:
@@ -67,8 +86,85 @@ desired_country<-unique(indicators_full$country_assessment)
 desired_country
 ```
 
+## Key results
 
-## General description of the dataset
+```{r, echo=F, message=F, warning=F}
+
+## Main stats to be used below
+
+# mean Ne 500 indicator for the country
+mean_ne <- mean(indicators_full$indicatorNe, na.rm = TRUE)
+
+# median Ne 500 indicator for the country
+median_ne <-median(indicators_full$indicatorNe, na.rm = TRUE)
+```
+
+
+A total `r length(unique(indicators_full$taxon))` taxa (species or subspecies) were assessed to estimate the Ne 500 an PM indicator. There was enough data to estimate the Ne 500 indicator in `r sum(!is.na(indicators_full$indicatorNe))` taxa. Considering only the taxa where it was possible to estimate the Ne 500 indicator, the indicator mean value for the country is `r mean_ne`. That means that in `r round(mean_ne*100, 1)`% of the analysed populations are large enough to prevent the loss of genetic diversity.
+
+Figure 1 shows:
+
+* The total proportion of populations within each of the assessed species which have an effective population size (Ne) above 500 is shown in the bars. Each species is a bar. If a species has value of 0 it means that none of its populations is large enough to maintain genetic diversity. If a species has a vale of 1, it means that all of its populations are large enough to maintain genetic diversity (Ne > 500).
+* The average taken across all species assessed for this indicator is indicated by the vertical dashed line.
+
+
+
+#### Figure 1. Species-level proportion of populations above Ne 500
+```{r, echo=F, message=F, warning=F}
+indicators_full %>%
+  filter(!is.na(indicatorNe)) %>%
+  
+ggplot(aes(x = indicatorNe, y = reorder(taxon, indicatorNe))) + # order by indicator value
+  geom_col(fill = "#004D40") +
+  geom_vline(xintercept = mean_ne, # this is estimated in code outside of the plot, above
+             colour = "#FFC107",
+             linetype = "dashed",
+             linewidth = 0.8) +
+  geom_text(aes(label = round(indicatorNe, 2),
+                x = indicatorNe + 0.02),                 # nudge labels slightly right
+            size = 3,
+            hjust = 0) +
+                         
+  scale_x_continuous(expand = expansion(mult = c(0, 0.02)),
+                     limits = c(0, 1)) +                 # adjust if indicatorNe is 0–1
+
+  labs(
+    x = "Proportion of populations within species > 500 Ne",
+    y = "",
+    title = ""
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    axis.text.y = element_text(size = 9, face="italic")
+  )
+```
+
+#### Figure 2. The frequency distribution of the Ne 500 indicator
+
+This figure shows how the indicator value is distributed across all species. A bias towards the right (indicator value of 0) mean that in the majority of species all populations are too small to retain genetic diversity.
+
+
+```{r, echo=F, message=F, warning=F}
+
+indicators_full %>%
+  filter(!is.na(indicatorNe)) %>%
+                  ggplot(aes(x = indicatorNe)) +
+                  geom_histogram(fill="#004D40") + # Adjust the number of bins as needed
+                  labs(x = "Proportion of populations within species with Ne>500 \n(Ne 500 indicator)", y = "Frequency") +
+
+                  theme_light() +
+                  theme(panel.border = element_blank(), text = element_text(size = 15), 
+                        legend.position = "right") +
+                  guides(fill = guide_legend(title = NULL))
+
+```
+
+
+
+## Extra plots for detailed inspection of results
+
+### General description of the dataset
 
 `r desired_country` has a total of `r nrow(indicators_full)` records. Of those, some taxa could have been assessed more than once, for example to account for different methods to define populations.
 
@@ -222,7 +318,7 @@ indNe_data %>%
 
 
 
-## Methods used to define populations
+### Methods used to define populations
 Frequency table of methods used to define population
 ```{r, echo=F, message=F, warning=F}
 table(indicators_full$defined_populations)
@@ -261,7 +357,7 @@ df %>%
 ```
 
 
-## Missing data on extant and extinct populations
+### Missing data on extant and extinct populations
 
 We have NA in indicator PM because in some cases the number of extinct populations is unknown, therefore the operation cannot be computed. 
 
@@ -304,7 +400,7 @@ indicators_full %>%
 ```
 
 
-## Ne > 500 indicator
+### Ne > 500 indicator
 
 In total, there was data to compute the Ne indicator in the following number of taxa:
 
@@ -315,38 +411,7 @@ sum(!is.na(indicators_full$indicatorNe))
 Considering those `r sum(!is.na(indicators_full$indicatorNe))` taxa, the Ne indicator mean value for the country is:
 
 ```{r, echo=F, message=F, warning=F}
-mean_ne <- mean(indicators_full$indicatorNe, na.rm = TRUE)
-mean_ne
-```
-
-### Ne indicator by taxon 
-
-```{r, echo=F, message=F, warning=F}
-indicators_full %>%
-  filter(!is.na(indicatorNe)) %>%
-  
-ggplot(aes(x = indicatorNe, y = reorder(taxon, indicatorNe))) +
-  geom_col(fill = "#0B2B4B") +
-  geom_vline(xintercept = mean_ne,
-             colour = "orange",
-             linetype = "dashed",
-             linewidth = 1) +
-  geom_text(aes(label = round(indicatorNe, 2),
-                x = indicatorNe + 0.02),                 # nudge labels slightly right
-            size = 3,
-            hjust = 0) +
-  scale_x_continuous(expand = expansion(mult = c(0, 0.02)),
-                     limits = c(0, 1)) +                 # adjust if indicatorNe is 0–1
-  labs(
-    x = "Proportion of populations within species > 500 Ne",
-    y = "",
-    title = ""
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    panel.grid.major.y = element_blank(),
-    axis.text.y = element_text(size = 10)
-  )
+mean(indicators_full$indicatorNe, na.rm = TRUE)
 ```
 
 
@@ -571,9 +636,9 @@ theme_light()
 
 
 
-## Proportion of populations mantained (PM indicator)
+### Proportion of populations mantained (PM indicator)
 
-### Plot Proportion of populations mantained (PM indicator) by method
+#### Plot Proportion of populations mantained (PM indicator) by method
 ```{r, echo=F, message=F, warning=F}
 # Prepare data for plot with nice labels:
 # sample size of TOTAL populations
@@ -607,7 +672,7 @@ df %>%
 
 ```
 
-### by type of range
+#### by type of range
 
 By type of range in the entire dataset:
   
@@ -633,7 +698,7 @@ indicators_full  %>%
   theme(panel.border = element_blank(), legend.position="none", text= element_text(size=20))
 ```
 
-###  by IUCN status
+####  by IUCN status
 
 By global IUCN:
 
@@ -736,7 +801,7 @@ By regional IUCN (this may make no sense for your country if there is no IUCN re
                   
 ```
 
-### Proportion of maintained populations by endemicity
+#### Proportion of maintained populations by endemicity
 
 ```{r, echo=F, message=F, warning=F}
 # get sample size by desired category
@@ -760,7 +825,7 @@ indicators_full  %>%
       theme(panel.border = element_blank(), legend.position="right", text= element_text(size=20))
 ```
 
-### Plot Scatter plot of indicatorPM and extant pops
+#### Plot Scatter plot of indicatorPM and extant pops
 
 ```{r, echo=F, message=F, warning=F}
 indicators_full %>%
