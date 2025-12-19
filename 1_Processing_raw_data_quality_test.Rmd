@@ -19,7 +19,7 @@ The output are:
 Output from KoboToolbox in .csv format as downloaded using [these instructions](https://ccgenetics.github.io/guidelines-genetic-diversity-indicators/docs/5_Data_collection/Kobo_toolbox_help.html). 
 
 ```{r}
-kobo_file="International_Genetic_Indicator_testing_FOR_Ginkotests.csv"
+kobo_file="International_Genetic_Indicator_testing_FOR_Ginkotests_noJapan.csv"
 ```
 
 Should records that need manual review and potentially correction be removed or kept in the exported "clean" data?. True to keep, false to filter them. Defaults to FALSE
