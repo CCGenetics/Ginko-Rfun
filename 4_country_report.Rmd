@@ -58,9 +58,6 @@ indNe_data<-read.csv("indNe_data.csv")
 ```
 
 
-A total `r length(unique(indicators_full$taxon))` taxa (species or subspecies) were assessed to estimate the Ne 500 an PM indicators. 
-
-
 ```{r, echo=F, message=F, warning=F}
 # Optional step if you have several countries in the dataset
 
@@ -78,6 +75,33 @@ Which country(ies) is(are) being analysed?
 ```{r, echo=F, message=F, warning=F}
 desired_country<-unique(indicators_full$country_assessment)
 desired_country
+```
+
+
+`r desired_country` has a total of `r nrow(indicators_full)` assessments (data entries in the Kobo form) where it was attempted to estimate the Ne 500 or PM indicators. These assessments where done in a total of `r length(unique(indicators_full$taxon))` taxa (species or subspecies). 
+
+The number of assessments and the number of taxa can differ, because some taxa could have been assessed more than once, for example to account for different methods to define populations.
+
+
+```{r, echo=F, message=F, warning=F}
+# To explore what kind of taxa the country assessed regardless of if they assessed them once or more, lets create a dataset keeping all single assessed taxa, plus only the first assessment for taxa assessed multiple times. 
+
+# object with single assessed taxa, plus only the first assessment for taxa assessed multiple times
+firstmulti<-indicators_full[!duplicated(cbind(indicators_full$taxon, indicators_full$country_assessment)), ]
+
+```
+
+How many taxa were assessed (i.e. counting only once taxa that were assessed multiple times)?
+
+```{r, echo=F, message=F, warning=F}
+# how many?
+nrow(firstmulti)
+```
+
+Which taxa where assessed more than once? (if any)
+
+```{r, echo=F, message=F, warning=F}
+indicators_full[duplicated(cbind(indicators_full$taxon, indicators_full$country_assessment)), ]
 ```
 
 ## Key results for the Global Biodiversity Framework 
@@ -229,7 +253,7 @@ indicators_full %>%
   filter(!is.na(indicatorPM)) %>%
   ggplot(aes(x = indicatorPM)) +
   geom_histogram(fill="#004D40") + # Adjust the number of bins as needed
-  labs(x = "Proportion of populations within species with Ne>500 \n(Ne 500 indicator)", y = "Frequency") +
+  labs(x = "Proportion of populations maintained within species", y = "Frequency") +
   
   theme_light() +
   theme(panel.border = element_blank(), text = element_text(size = 15), 
@@ -242,31 +266,6 @@ indicators_full %>%
 ## Extra plots for detailed inspection of results
 
 ### General description of the dataset
-
-`r desired_country` has a total of `r nrow(indicators_full)` records. Of those, some taxa could have been assessed more than once, for example to account for different methods to define populations.
-
-
-```{r, echo=F, message=F, warning=F}
-# To explore what kind of taxa the country assessed regardless of if they assessed them once or more, lets create a dataset keeping all single assessed taxa, plus only the first assessment for taxa assessed multiple times. 
-
-# object with single assessed taxa, plus only the first assessment for taxa assessed multiple times
-firstmulti<-indicators_full[!duplicated(cbind(indicators_full$taxon, indicators_full$country_assessment)), ]
-
-```
-
-How many taxa were assessed (i.e. counting only once taxa that were assessed multiple times)?
-
-```{r, echo=F, message=F, warning=F}
-# how many?
-nrow(firstmulti)
-```
-
-Which taxa where assessed more than once? (if any)
-
-```{r, echo=F, message=F, warning=F}
-indicators_full[duplicated(cbind(indicators_full$taxon, indicators_full$country_assessment)), ]
-```
-
 
 ### Taxonomic groups and endemicity
 
