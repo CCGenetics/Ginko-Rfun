@@ -38,25 +38,18 @@ Genetic diversity is variation at the DNA level, and includes differences among 
 
 *Within populations*: the diversity within populations of a species helps a population adapt quickly to changing conditions, avoid inbreeding problems, and persist when environmental disturbances occur. Small populations will tend to lose genetic diversity more rapidly than large populations.
 
-
 *Between populations*: the diversity between populations of a species is critical for ensuring the adaptive potential of that species (e.g. to a range of environmental conditions). Loss of any unique, genetically distinct populations can compromise a species’ ability to adapt to change (anthropogenic or otherwise).
 
 It is therefore crucial that all populations be maintained, and that populations are sufficiently large to maintain genetic health. The genetic diversity indicators are based on these premises.
 
-## "Genetic indicator" of the Global Biodiversity Framework 
+Genetic diversity within populations can be monitored by *the proportion of populations within species with an effective population size > 500* indicator ("Ne 500 indicator").
 
-Indicator name: A.4 The proportion of populations within species with an effective population size > 500 ("Ne 500 indicator")
-
-The "Ne 500 genetic diversity indicator" adopted at the Global Biodiversity Framework relates to [Goal A](https://www.cbd.int/gbf/goals): protect and restore; and [Target 4](https://www.cbd.int/gbf/targets/4): halt species extinction, protect genetic diversity, and manage human-wildlife conflicts.
-
-Effective population size (Ne) is a well-accepted metric for measuring the genetic diversity within populations of wild species. An Ne above 500 (usually, but not always, equivalent to a census population size above 5,000) is widely viewed as sufficient to maintain genetic diversity within populations of a given species.
-
-Populations that are small in size (effective population size Ne < 500) are highly susceptible to rapid loss of genetic diversity and are at high risk of extinction due to genetic threats.
-
-See the [indicator GBF's metadata](https://www.gbf-indicators.org/metadata/headline/A-4) for more details.
+Genetic diversity between populations can be monitored by the *proportion of populations maintained within species* indicator ("PM indicator").
 
 
 ## Raw data used
+
+A total `r length(unique(indicators_full$taxon))` taxa (species or subspecies) were assessed to estimate the Ne 500 an PM indicators. 
 
 The following files have the raw data used to produce the present report:
 
@@ -86,7 +79,18 @@ desired_country<-unique(indicators_full$country_assessment)
 desired_country
 ```
 
-## Key results
+## Key results for the Global Biodiversity Framework 
+
+### Headline indicator A.4 "The proportion of populations within species with an effective population size > 500" ("Ne 500 indicator")
+
+The "Ne 500 genetic diversity indicator" adopted at the Global Biodiversity Framework relates to [Goal A](https://www.cbd.int/gbf/goals): protect and restore; and [Target 4](https://www.cbd.int/gbf/targets/4): halt species extinction, protect genetic diversity, and manage human-wildlife conflicts.
+
+Effective population size (Ne) is a well-accepted metric for measuring the genetic diversity within populations of wild species. An Ne above 500 (usually, but not always, equivalent to a census population size above 5,000) is widely viewed as sufficient to maintain genetic diversity within populations of a given species.
+
+Populations that are small in size (effective population size Ne < 500) are highly susceptible to rapid loss of genetic diversity and are at high risk of extinction due to genetic threats.
+
+See the [indicator GBF's metadata](https://www.gbf-indicators.org/metadata/headline/A-4) for more details.
+
 
 ```{r, echo=F, message=F, warning=F}
 
@@ -100,7 +104,9 @@ median_ne <-median(indicators_full$indicatorNe, na.rm = TRUE)
 ```
 
 
-A total `r length(unique(indicators_full$taxon))` taxa (species or subspecies) were assessed to estimate the Ne 500 an PM indicator. There was enough data to estimate the Ne 500 indicator in `r sum(!is.na(indicators_full$indicatorNe))` taxa. Considering only the taxa where it was possible to estimate the Ne 500 indicator, the indicator mean value for the country is `r mean_ne`. That means that in `r round(mean_ne*100, 1)`% of the analysed populations are large enough to prevent the loss of genetic diversity.
+There was enough data to estimate the Ne 500 indicator in `r sum(!is.na(indicators_full$indicatorNe))` taxa out of `r length(unique(indicators_full$taxon))` assessed. 
+
+Considering only the taxa where it was possible to estimate the Ne 500 indicator, the indicator mean value for the country is `r mean_ne`. That means that in `r round(mean_ne*100, 1)`% of the analysed populations are large enough to prevent the loss of genetic diversity.
 
 Figure 1 shows:
 
@@ -160,7 +166,11 @@ indicators_full %>%
 
 ```
 
+### Complementary indicator to Goal A "Proportion of populations maintained within species" ("PM indicator")
 
+There was enough data to estimate the Ne 500 indicator in `r sum(!is.na(indicators_full$indicatorNe))` taxa out of `r length(unique(indicators_full$taxon))` assessed. 
+
+In addition to the importance of within population genetic diversity, the diversity between populations is also critical. The populations maintained (PM) indicator measures the proportion of populations that still exist compared to the total number of populations that used to occur (i.e., it is a way of quantifying population extinctions). Each population is presumed to be genetically distinct and locally adapted–for example, due to harboring genetic variants that are either absent or rare in other populations. Therefore, loss of any population within a species equates to the loss of unique genetic diversity. 
 
 ## Extra plots for detailed inspection of results
 
