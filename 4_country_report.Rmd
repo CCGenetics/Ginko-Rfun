@@ -49,8 +49,6 @@ Genetic diversity between populations can be monitored by the *proportion of pop
 
 ## Raw data used
 
-A total `r length(unique(indicators_full$taxon))` taxa (species or subspecies) were assessed to estimate the Ne 500 an PM indicators. 
-
 The following files have the raw data used to produce the present report:
 
 ```{r, echo=TRUE}
@@ -58,6 +56,9 @@ The following files have the raw data used to produce the present report:
 indicators_full<-read.csv(file="indicators_full.csv")
 indNe_data<-read.csv("indNe_data.csv")
 ```
+
+
+A total `r length(unique(indicators_full$taxon))` taxa (species or subspecies) were assessed to estimate the Ne 500 an PM indicators. 
 
 
 ```{r, echo=F, message=F, warning=F}
@@ -73,7 +74,7 @@ indicators_full<-indicators_full %>% filter(country_assessment==desired_country)
 
 ```
 
-Which country is being analysed?
+Which country(ies) is(are) being analysed?
 ```{r, echo=F, message=F, warning=F}
 desired_country<-unique(indicators_full$country_assessment)
 desired_country
@@ -168,9 +169,75 @@ indicators_full %>%
 
 ### Complementary indicator to Goal A "Proportion of populations maintained within species" ("PM indicator")
 
-There was enough data to estimate the Ne 500 indicator in `r sum(!is.na(indicators_full$indicatorNe))` taxa out of `r length(unique(indicators_full$taxon))` assessed. 
-
 In addition to the importance of within population genetic diversity, the diversity between populations is also critical. The populations maintained (PM) indicator measures the proportion of populations that still exist compared to the total number of populations that used to occur (i.e., it is a way of quantifying population extinctions). Each population is presumed to be genetically distinct and locally adapted–for example, due to harboring genetic variants that are either absent or rare in other populations. Therefore, loss of any population within a species equates to the loss of unique genetic diversity. 
+
+```{r, echo=F, message=F, warning=F}
+
+## Main stats to be used below
+
+# mean Ne 500 indicator for the country
+mean_PM <- mean(indicators_full$indicatorPM, na.rm = TRUE)
+
+# median Ne 500 indicator for the country
+median_PM <-median(indicators_full$indicatorPM, na.rm = TRUE)
+```
+
+There was enough data to estimate the PM indicator in `r sum(!is.na(indicators_full$indicatorPM))` taxa out of `r length(unique(indicators_full$taxon))` assessed. 
+
+Considering only the taxa where it was possible to estimate the Ne 500 indicator, the indicator mean value for the country is `r mean_PM`. That means that in the analysed species `r round(mean_PM*100, 1)`% of their populations are still existing.
+
+#### Figure 3. Species-level proportion of populations above Ne 500
+```{r, echo=F, message=F, warning=F}
+indicators_full %>%
+  filter(!is.na(indicatorPM)) %>%
+  
+  ggplot(aes(x = indicatorPM, y = reorder(taxon, indicatorPM))) + # order by indicator value
+  geom_col(fill = "#004D40") +
+  geom_vline(xintercept = mean_PM, # this is estimated in code outside of the plot, above
+             colour = "#FFC107",
+             linetype = "dashed",
+             linewidth = 0.8) +
+  geom_text(aes(label = round(indicatorPM, 2),
+                x = indicatorPM + 0.02),                 # nudge labels slightly right
+            size = 3,
+            hjust = 0) +
+  
+  scale_x_continuous(expand = expansion(mult = c(0, 0.02)),
+                     limits = c(0, 1)) +                 # adjust if indicatorPM is 0–1
+  
+  labs(
+    x = "Proportion of populations maintained within species",
+    y = "",
+    title = ""
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    axis.text.y = element_text(size = 9, face="italic")
+  )
+
+```
+
+#### Figure 4. The frequency distribution of the Ne 500 indicator
+
+This figure shows how the indicator value is distributed across all assessed species. A bias towards the left (indicator value of 1) mean that in the majority of species all populations are still maintained (not extinct).
+
+
+```{r, echo=F, message=F, warning=F}
+
+indicators_full %>%
+  filter(!is.na(indicatorPM)) %>%
+  ggplot(aes(x = indicatorPM)) +
+  geom_histogram(fill="#004D40") + # Adjust the number of bins as needed
+  labs(x = "Proportion of populations within species with Ne>500 \n(Ne 500 indicator)", y = "Frequency") +
+  
+  theme_light() +
+  theme(panel.border = element_blank(), text = element_text(size = 15), 
+        legend.position = "right") +
+  guides(fill = guide_legend(title = NULL))
+
+```
+
 
 ## Extra plots for detailed inspection of results
 
