@@ -40,6 +40,8 @@ The output are:
 
 If any entries need corrections, you have to go back to Kobo and correct the relevant entries. Once you are happy with how data looks, you can proceed to step 2. 
 
+-----
+
 ## Step 2: Processing clean data to extract indicator data
 
 R Note book: [2_Processing_clean_extract_indicators_data.Rmd](2_Processing_clean_extract_indicators_data.Rmd)
@@ -91,3 +93,45 @@ Regardless if the Nc data was NcPoint or NcRange, after transforming it to Ne it
 Finally, a new column `Ne_combined` is created combining data from Ne genetic estimates, with the Ne from transforming Nc using the ratio. For this, if both Ne from genetic data and from transforming Nc exist, the Ne from genetic data is given preference. 
 
 For transparency, the column `Ne_calculated_from` specifies for each population were the data to estimate Ne came from. Options are:  "genetic data", "NcPoint ratio", and "NcRange ratio", as explained above.
+
+-----
+
+## Step 3 - Estimate indicators
+
+This step estimates the Genetid Diversity Indiciators for each of the assessments (e.g. for each species assessed). The output includes the Ne 500 and PM indicator value per record along with kew metadata in a single large table.
+
+**The input** are the files produced by step 2:
+
+* `indNe_data.csv` 
+* `indPM_data.csv`
+* `indDNAbased_data.csv` 
+* `metadata.csv`
+
+#### Ne 500 indicator
+The Ne 500 indicator es estimated by dividing “the number of populations whithin a species with Ne > 500” over “the number of populations within a species with data to estimate Ne”.
+
+Here the indicator is estimated not by taxon but by X_uuid (unique record of a taxon), because a single taxon could be assessed by different countries or more than once with different parameters).
+
+This is done with the function `estimate_indicatorNe()` ([see it here](https://github.com/CCGenetics/Ginko-Rfun/blob/main/estimate_indicatorNe.R)).
+
+#### PM indicator
+
+The Proportion of Maintained populations (PM indicator) is the he proportion of populations within species which are maintained. This can be estimated based on the `n_extant_populations` and `n_extinct_populations`, as follows: 
+
+n_extant_populations / n_extant_populations + n_extinct_populations.
+
+#### DNA-based genetic monitoring indicator
+
+This indicator refers to the number (count) of taxa by country in which genetic monitoring based on DNA-methods is occurring. This is stored in the variable ´temp_gen_monitoring´ as a “yes/no” answer for each taxon, so to estimate the indicator, we only need to count how many said “yes”, keeping only one of the records when the taxon was multiassessed.
+
+#### Output:
+
+* A .csv file (called `indicators_full.csv`) The PM and Ne 500 indicators and the metadata in a single large table, in which each row is a taxon assessed.
+* 
+* A report of the step in html format, where you can also see the header of the indicator values
+
+-----
+
+## Step 4 - Country (or countries) report
+
+This steps creates a report including plots, simple statistics summarizing the indicator values and a short introduction and interpretation of results.
